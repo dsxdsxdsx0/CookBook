@@ -29,6 +29,7 @@ import android.widget.LinearLayout;
 import com.example.dsxdsxdsx0.cookbook.adapter.MainMenuAdapter;
 import com.example.dsxdsxdsx0.cookbook.adapter.MyViewPagerAdapter;
 import com.example.dsxdsxdsx0.cookbook.application.CookApplication;
+import com.example.dsxdsxdsx0.cookbook.cookerys.ShowCookActivity;
 import com.example.dsxdsxdsx0.cookbook.info.UpdateEntity;
 import com.example.dsxdsxdsx0.cookbook.util.ProgressDialogUtil;
 import com.lidroid.xutils.view.annotation.ContentView;
@@ -100,6 +101,9 @@ public class MainActivity extends BaseActivity {
     //全部菜谱点击事件
     @OnClick(R.id.tv_all_food)
     private void onAllFoodClick(View v){
+
+
+
 
     }
 
@@ -263,7 +267,14 @@ public class MainActivity extends BaseActivity {
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+                //跳转到ShowCookActivity
+                Intent intent = new Intent(MainActivity.this, ShowCookActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putInt("id",position + 1);
+                bundle.putString("title",list.get(position));
+                intent.putExtras(bundle);
+                startActivity(intent);
+                overridePendingTransition(R.anim.new_to_left,R.anim.old_to_left);
             }
         });
 

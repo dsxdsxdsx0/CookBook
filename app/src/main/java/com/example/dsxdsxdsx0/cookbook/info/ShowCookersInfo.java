@@ -218,5 +218,7 @@ public class ShowCookersInfo {
         this.error_code = error_code;
     }
 
-
+    public Result getResult() {
+        return result;
+    }
 }
