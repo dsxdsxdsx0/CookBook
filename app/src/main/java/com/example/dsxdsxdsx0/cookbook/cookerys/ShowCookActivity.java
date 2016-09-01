@@ -1,7 +1,9 @@
 package com.example.dsxdsxdsx0.cookbook.cookerys;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
@@ -9,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -18,6 +21,8 @@ import android.widget.Toast;
 import com.example.dsxdsxdsx0.cookbook.BaseActivity;
 import com.example.dsxdsxdsx0.cookbook.R;
 import com.example.dsxdsxdsx0.cookbook.adapter.ShowCookAdapter;
+import com.example.dsxdsxdsx0.cookbook.db.CooksDbManager;
+import com.example.dsxdsxdsx0.cookbook.details.CookDetailsActivity;
 import com.example.dsxdsxdsx0.cookbook.info.ShowCookersInfo;
 import com.example.dsxdsxdsx0.cookbook.util.NetworkUtil;
 import com.google.gson.Gson;
@@ -43,7 +48,7 @@ import java.util.List;
 @ContentView(R.layout.activity_cookery)
 public class ShowCookActivity extends BaseActivity {
 
-    private ShowCookersInfo info;
+    private static ShowCookersInfo info;
     private ShowCookersInfo tabInfo2;
     private ShowCookersInfo tabInfo3;
 
@@ -74,6 +79,8 @@ public class ShowCookActivity extends BaseActivity {
     private String title;//标题
 
     private int tabCursor;//tab页导航标题
+
+    private CookItemAdapter cookItemAdapter;//ListView的item适配器
 
     @Override
     public void initBefore() {
@@ -151,10 +158,11 @@ public class ShowCookActivity extends BaseActivity {
             public void onSuccess(ResponseInfo<Object> responseInfo) {
                 Gson gson = new Gson();
                 if (isLoad) {
-                    ShowCookersInfo showCookersInfo = gson.fromJson(responseInfo.result.toString(), ShowCookersInfo.class);
-                    if (NetworkUtil.isWrong(ShowCookActivity.this, showCookersInfo.getError_code(), Toast.makeText(getApplicationContext(),"", Toast.LENGTH_LONG))) {
-                        for (int i = 0, length = showCookersInfo.getResult().getData().size(); i < length; i++) {
-                            showCookersInfo.getResult().getData().add(showCookersInfo.getResult().getData().get(i));
+                    ShowCookersInfo loadInfo = gson.fromJson(responseInfo.result.toString(), ShowCookersInfo.class);
+                    if (NetworkUtil.isWrong(ShowCookActivity.this, loadInfo.getError_code(), Toast.makeText(getApplicationContext(), "", Toast.LENGTH_LONG))) {
+                        for (int i = 0, length = loadInfo.getResult().getData().size(); i < length; i++) {
+                            info.getResult().getData().add(loadInfo.getResult().getData().get(i));
+                            cookItemAdapter.notifyDataSetChanged();
                         }
                     }
                 } else {
@@ -167,7 +175,7 @@ public class ShowCookActivity extends BaseActivity {
 
             @Override
             public void onFailure(HttpException e, String s) {
-                Log.i("TAG",s);
+                Log.i("TAG", s);
             }
         });
 
@@ -175,7 +183,37 @@ public class ShowCookActivity extends BaseActivity {
 
     private void fillingFragList() {
         if (info == null) {
+            return;
+        }
+        final Handler handler = new Handler();
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (fragmentList.get(0).getmCooksLv() == null) {
+                    return;
+                }
+                cookItemAdapter = new CookItemAdapter(info);
+                fragmentList.get(0).setFlag1();
+                fragmentList.get(0).getmCooksLv().setAdapter(cookItemAdapter);
+                fragmentList.get(0).getmCooksLv().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        //根据列表id所对应的数据库数值设置item显示
+                        CooksDbManager.getCooksDBManager(ShowCookActivity.this).setData(info.getResult().getData().get((int) id));
+                        //根据id插入数据
+                        CooksDbManager.getCooksDBManager(ShowCookActivity.this).insertData(info.getResult().getData().get((int)id));
 
+                        Intent intent = new Intent(ShowCookActivity.this,CookDetailsActivity.class);
+                        startActivity(intent);
+                    }
+                });
+            }
+        };
+
+        if (fragmentList.get(0).getmCooksLv() == null) {
+            handler.postDelayed(runnable,300);
+        }else {
+            handler.post(runnable);
         }
 
     }
@@ -183,7 +221,86 @@ public class ShowCookActivity extends BaseActivity {
 
     @Override
     public void initAfter() {
+        getDataFromNet(false);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                switch (position){
+                    case 0:
+                        fillingFragList();
+                        break;
+                    case 1:
+                        ShowCookFragment fra = fragmentList.get(1);
+                        fra.setFlag2();
+                        tabInfo2 = CooksDbManager.getCooksDBManager(ShowCookActivity.this).getData(true,false);
+                        fra.getmCooksLv().setAdapter(new CookItemAdapter(tabInfo2));
+                        fra.getmCooksLv().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                CooksDbManager.getCooksDBManager(ShowCookActivity.this).setData(tabInfo2.getResult().getData().get((int) id));
+                                CooksDbManager.getCooksDBManager(ShowCookActivity.this).insertData(tabInfo2.getResult().getData().get((int) id));
+
+                                //跳转到菜谱详情页
+                                Intent intent = new Intent();
+
+                            }
+                        });
+                        break;
+
+                    case 2:
+                        ShowCookFragment fra2 = fragmentList.get(2);
+                        fra2.setFlag3();
+                        tabInfo3 = CooksDbManager.getCooksDBManager(ShowCookActivity.this).getData(true,false);
+                        fra2.getmCooksLv().setAdapter(new CookItemAdapter(tabInfo3));
+                        fra2.getmCooksLv().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                CooksDbManager.getCooksDBManager(ShowCookActivity.this).setData(tabInfo3.getResult().getData().get((int)id));
+                                CooksDbManager.getCooksDBManager(ShowCookActivity.this).setData(tabInfo3.getResult().getData().get((int)id));
+
+                                //跳转到菜谱详情页
+                                Intent intent = new Intent();
+
+
+                            }
+                        });
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        if(tabCursor >= 1){
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                   viewPager.setCurrentItem(tabCursor,true);
+                }
+            },500);
+        }
+
+
+    }
+
+
+
+    /**
+     * 当最近浏览数据被清除时调用，刷新ListView
+     */
+    public void updateData(){
+        ShowCookFragment showCookFragment = fragmentList.get(1);
+        ShowCookersInfo info = CooksDbManager.getCooksDBManager(ShowCookActivity.this).getData(true,false);
+        showCookFragment.getmCooksLv().setAdapter(new CookItemAdapter(info));
     }
 
 
