@@ -3,6 +3,7 @@ package com.example.dsxdsxdsx0.cookbook.db;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.dsxdsxdsx0.cookbook.info.ShowCookersInfo;
 
@@ -10,191 +11,165 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by dsxdsxdsx0 on 2016/8/16.
- *
- * 数据库管理器
+ * Created by JiaJi on 2015/12/15.
  */
 public class CooksDbManager {
-
-    private Context mContext;
-
     private SQLiteDatabase db;
-
     private ShowCookersInfo.Result.Data data;
+    private static CooksDbManager cooksDBManager;
 
-    private static CooksDbManager cooksDbManager;
-
-    public CooksDbManager(Context context) {
-        this.mContext = context;
-        CookHelper cookHelper = new CookHelper(mContext);
-        db = cookHelper.getWritableDatabase();
+    private CooksDbManager(Context context) {
+        CookHelper helper = new CookHelper(context);
+        db = helper.getWritableDatabase();
     }
 
-    public static CooksDbManager getCooksDbManager(Context context){
-        if(cooksDbManager == null){
-            cooksDbManager = new CooksDbManager(context);
+    //单例模式,数据库管理器初始化
+    public static CooksDbManager getCooksDBManager(Context context) {
+        if (cooksDBManager == null) {
+            cooksDBManager = new CooksDbManager(context);
         }
-        return cooksDbManager;
+        return cooksDBManager;
     }
 
     /**
-     * 添加数据
+     * 增添数据
      */
-    public void insertData(ShowCookersInfo.Result.Data data){
+    public void insertData(ShowCookersInfo.Result.Data data) {
         Cursor cursor = db.rawQuery("select * from " + CookHelper.TABLE_TEXT + " where " + CookHelper.ID + "=" + data.getId(),null);
-        if(cursor.getCount() == 1){
+        if (cursor.getCount() == 1) {
             cursor.close();
-            db.execSQL("update " + CookHelper.TABLE_TEXT + " set " + CookHelper.HISTORY_LOOK + " = " + "1"
-                    + " where " + CookHelper.ID + "=" + data.getId());
+            db.execSQL("update " + CookHelper.TABLE_TEXT + " set " + CookHelper.HISTORY_LOOK + " = " + 1 + " where " + CookHelper.ID + "=" + data.getId());
             return;
         }
         cursor.close();
-        String textSql = "insert into " + CookHelper.TABLE_TEXT +"(" + CookHelper.ID + "," + CookHelper.TITLE + ","
-                + CookHelper.TAGS + "," + "," + CookHelper.IMTRO + "," + CookHelper.INGREDIENTS + "," + CookHelper.BURDEN + "," +
-                CookHelper.ALBUMS + "," + CookHelper.HISTORY_LOOK + ")" +
-                "values('" + data.getId() + "','" + data.getTitle() + "','" + data.getTags() + "','" + data.getImtro() + "','" + data.getIngredients()
+        String textSql = "insert into " + CookHelper.TABLE_TEXT + "(" + CookHelper.ID + "," + CookHelper.TITLE + "," +
+                CookHelper.TAGS + "," + CookHelper.IMTRO + "," + CookHelper.INGREDIENTS + "," + CookHelper.BURDEN + "," +
+                CookHelper.ALBUMS + "," +
+                CookHelper.HISTORY_LOOK + ")" +
+                " values('" + data.getId() + "','" + data.getTitle() + "','" + data.getTags() + "','" + data.getImtro() + "','" + data.getIngredients()
                 + "','" + data.getBurden() + "','" + data.getAlbums().get(0) + "',1)";
         db.execSQL(textSql);
-
-        for (int i =0;i<data.getStep().size();i++){
-            String imgSql = "insert into " + CookHelper.TABLE_IMGS + "(" + CookHelper.IMGS + "," + CookHelper.STEP + ")"
-                    + "values('" + data.getStep().get(i).getImg() + "','" + data.getStep().get(i).getStep() + "')";
-            db.execSQL(imgSql);
+        //
+        for (int i = 0, length = data.getStep().size(); i < length; i++) {
+            String imgsSql = "insert into " + CookHelper.TABLE_IMGS + "(" + CookHelper.ID + "," + CookHelper.IMG + "," + CookHelper.STEP + ")"
+                    + " values('" + data.getId() + "','" +
+                    data.getStep().get(i).getImg() + "','" + data.getStep().get(i).getStep() + "')";
+            db.execSQL(imgsSql);
         }
     }
 
     /**
-     *  删除数据
+     * 删除数据
+     *
      * @param data
      */
-    public void deleteData(ShowCookersInfo.Result.Data data){
-
-        if (data == null) {
+    public void delData(ShowCookersInfo.Result.Data data) {
+        if (data == null) {//如果没有数据，先通过查询语句遍历数据
             /**
              * SQLiteDatabase的rawQuery() 用于执行select语句
              * 使用例子如下：
              * SQLiteDatabase db = null;
              * Cursor cursor = db.rawQuery(“select * from person”, null);
              */
-            Cursor cursor = db.rawQuery("select * from " + CookHelper.TABLE_TEXT,null);
-            while (cursor.moveToNext()){
+            Cursor cursor = db.rawQuery("select * from " + CookHelper.TABLE_TEXT, null);
+            while (cursor.moveToNext()) {
+                if (cursor.getInt(cursor.getColumnIndex(CookHelper.HISTORY_LOOK)) == 1)//删除浏览历史的数据
+                {
+                    if (cursor.getInt(cursor.getColumnIndex(CookHelper.MY_LIKE)) == 1){
 
-                //cursor.getColumnIndex(String columnName)返回指定列的名称，如果不存在返回-1
-                int historyLook = cursor.getColumnIndex(CookHelper.HISTORY_LOOK);//删除浏览历史的数据
-                //cusor.getInt(int columnIndex) : 返回指定列数的value作为一个int值
-                if(cursor.getInt(historyLook) == 1){//有历史数据
-                    int myLike = cursor.getColumnIndex(CookHelper.MY_LIKE);//获取我的收藏的value值，0是无收藏，1是有收藏
-                    if(cursor.getInt(myLike) == 1){//有收藏数据
-                        //更新表，将表中数据根据id值设置历史记录为0
-                        String sql = "update " + CookHelper.TABLE_TEXT + " set " + CookHelper.HISTORY_LOOK + " = 0"
-                                + " where " + CookHelper.ID + "=" + cursor.getInt(cursor.getColumnIndex(CookHelper.ID));
-                        db.execSQL(sql);
+                        db.execSQL(" update  "+ CookHelper.TABLE_TEXT+" set "+ CookHelper.HISTORY_LOOK+" =0"
+                                +" where "+ CookHelper.ID+" = "+cursor.getInt(cursor.getColumnIndex(CookHelper.ID)));
 
-//                        continue;
+                        continue;
                     }
-                    //执行删除操作
-                    String txtSql = "delete from " + CookHelper.TABLE_TEXT + " where " + CookHelper.ID + "="
-                            + cursor.getInt(cursor.getColumnIndex(CookHelper.ID));
-                    db.execSQL(txtSql);
-
-                    String imgSql = "delete from " + CookHelper.TABLE_IMGS + " where " + CookHelper.ID + "="
-                            + cursor.getInt(cursor.getColumnIndex(CookHelper.ID));
-                    db.execSQL(imgSql);
+                    String textSql = "delete from " + CookHelper.TABLE_TEXT + " where "
+                            + CookHelper.ID + "=" + cursor.getInt(cursor.getColumnIndex(CookHelper.ID));
+                    db.execSQL(textSql);
+                    String imgsSql = "delete from " + CookHelper.TABLE_IMGS + " where "
+                            + CookHelper.ID + "=" + cursor.getInt(cursor.getColumnIndex(CookHelper.ID));
+                    db.execSQL(imgsSql);
                 }
-                cursor.close();
             }
-        }else {
-            String txtSql = "delete from " + CookHelper.TABLE_TEXT + " where " + CookHelper.ID + " = "
-                    + data.getId();
-            db.execSQL(txtSql);
-
-            String imgSql = "delete from " + CookHelper.TABLE_IMGS + " where " + CookHelper.ID + " = "
-                    + data.getId();
-            db.execSQL(imgSql);
+            cursor.close();
+        } else {
+            String textSql = "delete from " + CookHelper.TABLE_TEXT + " where "
+                    + CookHelper.ID + "=" + data.getId();
+            db.execSQL(textSql);
+            String imgsSql = "delete from " + CookHelper.TABLE_IMGS + " where "
+                    + CookHelper.ID + "=" + data.getId();
+            db.execSQL(imgsSql);
         }
     }
 
-
     /**
-     *  更改数据
+     * 修改数据，default 0（不喜欢） default 1 （喜欢）
+     *
      * @param data
      * @param isLike 是否收藏
      */
-    public void updateData(ShowCookersInfo.Result.Data data,boolean isLike){
-        String txtSql = "update " + CookHelper.TABLE_TEXT + " set " + CookHelper.MY_LIKE +
-                "='" + (isLike ? 1 : 0) + "' where " + CookHelper.ID + "=" + data.getId();
-        db.execSQL(txtSql);
+    public void updateData(ShowCookersInfo.Result.Data data, boolean isLike) {
+        String textSql = "update " + CookHelper.TABLE_TEXT + " set "
+                + CookHelper.MY_LIKE + "='" + (isLike ? 1 : 0) + "' where " + CookHelper.ID + "=" + data.getId();
+        db.execSQL(textSql);
     }
 
-    /**
-     * 获取数据
-     * @param isHistory
-     * @param isLike
-     * @return
-     */
-    public ShowCookersInfo getData(boolean isHistory,boolean isLike){
-
-        ShowCookersInfo showCookersInfo = new ShowCookersInfo();
-        String txtSql = "";
+    public ShowCookersInfo getData(boolean isHistory, boolean isLike) {
+        ShowCookersInfo info = new ShowCookersInfo();
+        String textSql;
         if (isHistory) {
-            txtSql = "select * from " + CookHelper.TABLE_TEXT + " where " + CookHelper.HISTORY_LOOK + " = " + 1;
-        }else {
-            txtSql = "select * from " + CookHelper.TABLE_TEXT + " where " + CookHelper.MY_LIKE + " = " + (isLike ? 1 : 0);
+            textSql = "select * from " + CookHelper.TABLE_TEXT + " where " + CookHelper.HISTORY_LOOK + " = " + 1;
+
+        } else {
+            textSql = "select * from " + CookHelper.TABLE_TEXT + " where " + CookHelper.MY_LIKE + "=" + (isLike ? 1 : 0);
         }
 
-        Cursor cursor = db.rawQuery(txtSql,null);
+        Cursor textCursor = db.rawQuery(textSql, null);
         ShowCookersInfo.Result result = new ShowCookersInfo.Result();
-        showCookersInfo.setResult(result);
-
+        info.setResult(result);
         List<ShowCookersInfo.Result.Data> datas = new ArrayList<>();
         result.setData(datas);
-
-        ShowCookersInfo.Result.Data data = null;
-
-        while (cursor.moveToNext()){
+        ShowCookersInfo.Result.Data data;
+        while (textCursor.moveToNext()) {
             data = new ShowCookersInfo.Result.Data();
-            data.setId(cursor.getString(cursor.getColumnIndex(CookHelper.ID)));
-            data.setTitle(cursor.getString(cursor.getColumnIndex(CookHelper.TITLE)));
-            data.setTags(cursor.getString(cursor.getColumnIndex(CookHelper.TAGS)));
-            data.setImtro(cursor.getString(cursor.getColumnIndex(CookHelper.IMTRO)));
-            data.setBurden(cursor.getString(cursor.getColumnIndex(CookHelper.BURDEN)));
-            data.setIngredients(cursor.getString(cursor.getColumnIndex(CookHelper.INGREDIENTS)));
+            data.setId(textCursor.getString(textCursor.getColumnIndex(CookHelper.ID)));
+            data.setTitle(textCursor.getString(textCursor.getColumnIndex(CookHelper.TITLE)));
+            data.setTags(textCursor.getString(textCursor.getColumnIndex(CookHelper.TAGS)));
+            data.setImtro(textCursor.getString(textCursor.getColumnIndex(CookHelper.IMTRO)));
+            data.setIngredients(textCursor.getString(textCursor.getColumnIndex(CookHelper.INGREDIENTS)));
+            data.setBurden(textCursor.getString(textCursor.getColumnIndex(CookHelper.BURDEN)));
+            List<String> albums = new ArrayList<>();
+            data.setAlbums(albums);
+            albums.add(textCursor.getString(textCursor.getColumnIndex(CookHelper.ALBUMS)));
 
-            List<String> album = new ArrayList<>();
-            data.setAlbums(album);
-            album.add(cursor.getString(cursor.getColumnIndex(CookHelper.ALBUMS)));
-
-            //获取图片
-            List<ShowCookersInfo.Result.Data.Step> stepList = new ArrayList<>();
-            data.setStep(stepList);
-            ShowCookersInfo.Result.Data.Step step = null;
-
-            String imgSql = "select * from " + CookHelper.TABLE_IMGS + " where " + CookHelper.ID + " = "
-                    + cursor.getInt(cursor.getColumnIndex(CookHelper.ID));
-            Cursor imgCursor = db.rawQuery(imgSql,null);
-            while (imgCursor.moveToNext()){
-                step = new ShowCookersInfo.Result.Data.Step();
-                step.setImg(imgCursor.getString(imgCursor.getColumnIndex(CookHelper.IMGS)));
-                step.setStep(imgCursor.getString(imgCursor.getColumnIndex(CookHelper.STEP)));
-                stepList.add(step);
+            List<ShowCookersInfo.Result.Data.Steps> stepses = new ArrayList<>();
+            data.setStep(stepses);
+            ShowCookersInfo.Result.Data.Steps steps;
+            String imgsSql = "select * from " + CookHelper.TABLE_IMGS + " where " + CookHelper.ID + "="
+                    + textCursor.getInt(textCursor.getColumnIndex(CookHelper.ID));
+            Cursor imgsCursor = db.rawQuery(imgsSql, null);
+            while (imgsCursor.moveToNext()) {
+                steps = new ShowCookersInfo.Result.Data.Steps();
+                steps.setImg(imgsCursor.getString(imgsCursor.getColumnIndex(CookHelper.IMG)));
+                steps.setStep(imgsCursor.getString(imgsCursor.getColumnIndex(CookHelper.STEP)));
+                stepses.add(steps);
             }
             datas.add(data);
-            imgCursor.close();
+            imgsCursor.close();
         }
-        cursor.close();
-        return showCookersInfo;
+        textCursor.close();
+        return info;
     }
 
     /**
      * 当前id的菜谱是否是添加了收藏
+     *
      * @param id
      * @return
      */
-    public boolean isLikeNowCook(String id){
-
+    public boolean isLikeNowCook(String id) {
         boolean isLike;
-        Cursor cursor = db.rawQuery("select " + CookHelper.MY_LIKE + " from " + CookHelper.TABLE_TEXT +
-                " where " + CookHelper.ID + " = " + id , null);
+        Cursor cursor = db.rawQuery("select " + CookHelper.MY_LIKE + " from " + CookHelper.TABLE_TEXT
+                + " where " + CookHelper.ID + "=" + id, null);
         cursor.moveToNext();
         isLike = cursor.getInt(0) == 1;
         cursor.close();
