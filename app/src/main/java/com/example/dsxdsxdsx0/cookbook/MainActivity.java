@@ -89,13 +89,21 @@ public class MainActivity extends BaseActivity {
     //我的收藏点击事件
     @OnClick(R.id.tv_collect)
     public void onCollectClick(View v){
-
+        Intent intent = new Intent(MainActivity.this,ShowCookActivity.class);
+        intent.putExtra("title","我的收藏");
+        intent.putExtra("tab_cursor",2);
+        startActivity(intent);
+        overridePendingTransition(R.anim.new_to_left, R.anim.old_to_left);
     }
 
     //最近浏览点击事件
     @OnClick(R.id.tv_read)
     public void onScanClick(View v){
-
+        Intent intent = new Intent(MainActivity.this,ShowCookActivity.class);
+        intent.putExtra("title","最近浏览");
+        intent.putExtra("tab_cursor",1);
+        startActivity(intent);
+        overridePendingTransition(R.anim.new_to_left,R.anim.old_to_left);
     }
 
     //全部菜谱点击事件
