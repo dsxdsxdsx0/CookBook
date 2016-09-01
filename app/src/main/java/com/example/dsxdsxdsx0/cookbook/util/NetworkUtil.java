@@ -49,7 +49,7 @@ public class NetworkUtil {
     public static String getUrl(int id,String menu,int pn,int rn){
         String url = "";
         if (menu == null || "".equals(menu)) {
-            url = "http://apis.juhe.cn/cook/index?key=" + "&cid" + id + "&pn" + pn + "&rn" + rn;
+            url = "http://apis.juhe.cn/cook/index?key=" + KEY +"&cid=" + id + "&pn=" + pn + "&rn=" + rn;
         }else {
             try {
                 menu = URLEncoder.encode(menu,"utf-8");
