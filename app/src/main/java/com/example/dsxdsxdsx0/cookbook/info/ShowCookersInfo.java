@@ -77,9 +77,9 @@ public class ShowCookersInfo {
             private String ingredients;
             private String burden;
             private List<String> albums;
-            private List<Step> step;
+            private List<Steps> steps;
 
-            public static class Step{
+            public static class Steps{
                 private String img;
                 private String step;
 
@@ -156,12 +156,12 @@ public class ShowCookersInfo {
                 this.albums = albums;
             }
 
-            public List<Step> getStep() {
-                return step;
+            public List<Steps> getStep() {
+                return steps;
             }
 
-            public void setStep(List<Step> step) {
-                this.step = step;
+            public void setStep(List<Steps> steps) {
+                this.steps = steps;
             }
         }
 
