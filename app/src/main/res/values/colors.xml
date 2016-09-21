@@ -7,4 +7,10 @@
     <color name="white">#ffffff</color>
     <color name="text_color">#ff5e00</color>
     <color name="item_main_bg_p">#6c876e4c</color>
+    <color name="bg">#ECEDF1</color>
+
+    <color name="view_line">#e5e5e5</color>
+    <color name="text_login_dark">#c7c3ff</color>
+
+    <color name="black">#000000</color>
 </resources>

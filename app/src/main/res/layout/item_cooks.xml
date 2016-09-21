@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_2">
+
+    <TextView
+        android:id="@+id/tvLetter_item_books"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_gravity="center_vertical"
+        android:paddingLeft="15dp"
+        android:text="A"
+        android:textSize="12sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:layout_width="200dp"
+        android:layout_height="1dp"
+        android:layout_marginLeft="15dp"
+        android:background="@color/white"/>
+
+    <com.example.dsxdsxdsx0.cookbook.view.MyGridView
+        android:id="@+id/show_books_grid_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:cacheColorHint="#00000000"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:listSelector="#00000000"
+        android:numColumns="4"
+
+        />
+
+</LinearLayout>

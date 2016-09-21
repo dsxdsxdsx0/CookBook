@@ -30,6 +30,7 @@ import com.example.dsxdsxdsx0.cookbook.adapter.MainMenuAdapter;
 import com.example.dsxdsxdsx0.cookbook.adapter.MyViewPagerAdapter;
 import com.example.dsxdsxdsx0.cookbook.application.CookApplication;
 import com.example.dsxdsxdsx0.cookbook.cookerys.ShowCookActivity;
+import com.example.dsxdsxdsx0.cookbook.index.IndexActivity;
 import com.example.dsxdsxdsx0.cookbook.info.UpdateEntity;
 import com.example.dsxdsxdsx0.cookbook.util.ProgressDialogUtil;
 import com.lidroid.xutils.view.annotation.ContentView;
@@ -40,6 +41,8 @@ import com.lidroid.xutils.view.annotation.event.OnTouch;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.bmob.v3.Bmob;
 
 @ContentView(R.layout.activity_main)
 public class MainActivity extends BaseActivity {
@@ -109,10 +112,22 @@ public class MainActivity extends BaseActivity {
     //全部菜谱点击事件
     @OnClick(R.id.tv_all_food)
     private void onAllFoodClick(View v){
+        Intent intent = new Intent(this, IndexActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.new_to_top,R.anim.old_to_top);
+    }
 
-
-
-
+    //搜索点击按钮
+    @OnClick(R.id.img_search)
+    private void onSearchClick(View view){
+        String content = mSearchEt.getText().toString();
+        if (content == null || content.length() != 0) {
+            Intent intent = new Intent(this,ShowCookActivity.class);
+            intent.putExtra("title","菜谱搜索");
+            intent.putExtra("search_key",content);
+            startActivity(intent);
+            overridePendingTransition(R.anim.new_to_left,R.anim.old_to_left);
+        }
     }
 
     @OnTouch(R.id.main_viewpager)
@@ -155,6 +170,25 @@ public class MainActivity extends BaseActivity {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
             setStatusHeight();
         }
+
+
+        //提供以下两种方式进行初始化操作：
+
+        //第一：默认初始化
+        Bmob.initialize(this, "4efaa4fdb3375a020686ff80dc758c2a");
+
+        //第二：自v3.4.7版本开始,设置BmobConfig,允许设置请求超时时间、文件分片上传时每片的大小、文件的过期时间(单位为秒)，
+        //BmobConfig config =new BmobConfig.Builder(this)
+        ////设置appkey
+        //.setApplicationId("Your Application ID")
+        ////请求超时时间（单位为秒）：默认15s
+        //.setConnectTimeout(30)
+        ////文件分片上传时每片的大小（单位字节），默认512*1024
+        //.setUploadBlockSize(1024*1024)
+        ////文件的过期时间(单位为秒)：默认1800s
+        //.setFileExpiration(2500)
+        //.build();
+        //Bmob.initialize(config);
     }
 
     @Override

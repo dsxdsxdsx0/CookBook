@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp"
+    android:background="@color/bg_2">
+
+    <TextView
+        android:id="@+id/item_grid_txt"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:background="@drawable/main_menu_item_bg"
+        android:padding="5dp"
+        android:text="家常菜"
+        android:textColor="#55000000"/>
+
+</LinearLayout>
